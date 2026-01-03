@@ -159,16 +159,13 @@ const scrollToBottom = () => {
 
 const leaveRoom = async () => {
   try {
-    // 세션 데이터 삭제
-    await storageManager.clearSessionData()
-
-    // 패널 닫기
+    // 패널만 닫기 (세션 데이터는 유지)
     await panelManager.removeModal()
 
-    console.log('방을 나갔습니다')
+    console.log('패널을 닫았습니다')
   } catch (err) {
-    console.error('방 나가기 실패:', err)
-    errorMessage.value = '방 나가기에 실패했습니다.'
+    console.error('패널 닫기 실패:', err)
+    errorMessage.value = '패널 닫기에 실패했습니다.'
     showErrorState.value = true
   }
 }

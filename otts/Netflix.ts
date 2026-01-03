@@ -3,6 +3,9 @@ import {OTTPlugin} from "@/types";
 
 export const netflix : OTTPlugin = {
     name: 'Netflix',
+    isWatchPage: (url: string) => {
+        return url.includes('/watch/');
+    },
     locationContainer: (container: HTMLElement) => {
         const watchVideo = document.querySelector('.watch-video') as HTMLElement;
         watchVideo.style.display = 'flex';

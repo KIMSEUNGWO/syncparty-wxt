@@ -9,18 +9,15 @@
 
     <!-- Main Content -->
     <template v-else>
-      <!-- Top Section: Invite Code -->
-      <div class="invite-section">
-        <div class="invite-header">
-          <div class="invite-code-label">초대 코드</div>
-          <div class="invite-code">{{ inviteCode }}</div>
-        </div>
-        <div class="invite-actions">
-          <CopyButton :text="inviteUrl" />
-          <button @click="leaveRoom" class="leave-button">
-            나가기
-          </button>
-        </div>
+      <!-- Top Action Bar -->
+      <div class="action-bar">
+        <CopyButton :text="inviteUrl" />
+        <button @click="leaveRoom" class="leave-button" title="나가기">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
       </div>
 
       <!-- Chat Messages Section -->
@@ -177,7 +174,7 @@ const leaveRoom = async () => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #242424;
+  background: linear-gradient(180deg, #242424 0%, #1a1a1a 100%);
 }
 
 /* Error State */
@@ -207,73 +204,70 @@ const leaveRoom = async () => {
   font-size: 0.9em;
 }
 
-/* Top Section: Invite Code */
-.invite-section {
+/* Top Action Bar */
+.action-bar {
   background-color: #1a1a1a;
-  padding: 16px;
+  padding: 12px;
   border-bottom: 1px solid #333;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.invite-header {
-  flex: 1;
-  min-width: 0;
-}
-
-.invite-code-label {
-  font-size: 0.75em;
-  color: rgba(255, 255, 255, 0.6);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
-}
-
-.invite-code {
-  font-size: 1.2em;
-  font-weight: 700;
-  color: #646cff;
-  font-family: 'Courier New', monospace;
-  letter-spacing: 1px;
-}
-
-.invite-actions {
-  display: flex;
-  flex-direction: column;
+  justify-content: flex-end;
   gap: 8px;
   flex-shrink: 0;
 }
 
 .leave-button {
   background-color: transparent;
-  color: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 8px 16px;
-  font-size: 0.85em;
+  color: rgba(255, 107, 107, 0.8);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.25s;
-  font-weight: 500;
-  white-space: nowrap;
+  transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .leave-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.4);
-  color: rgba(255, 255, 255, 0.87);
+  background-color: rgba(255, 107, 107, 0.15);
+  border-color: rgba(255, 107, 107, 0.6);
+  color: rgba(255, 107, 107, 1);
+}
+
+.leave-button svg {
+  display: block;
 }
 
 /* Chat Messages Section */
 .chat-container {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  overflow-x: hidden;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  background: linear-gradient(180deg, #242424 0%, #1e1e1e 100%);
+}
+
+.chat-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.chat-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .empty-state {
@@ -282,54 +276,61 @@ const leaveRoom = async () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.5);
   text-align: center;
+  gap: 8px;
 }
 
 .empty-icon {
-  font-size: 3em;
-  margin-bottom: 16px;
-  opacity: 0.5;
+  font-size: 2.5em;
+  margin-bottom: 8px;
+  opacity: 0.4;
+  filter: grayscale(0.3);
 }
 
 .empty-state p {
-  margin: 4px 0;
+  margin: 0;
+  font-size: 15px;
 }
 
 .empty-hint {
-  font-size: 0.85em;
-  color: rgba(255, 255, 255, 0.4);
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.35);
 }
 
 /* Input Section */
 .input-section {
-  background-color: #1a1a1a;
-  padding: 16px;
-  border-top: 1px solid #333;
+  background: linear-gradient(180deg, #1e1e1e 0%, #1a1a1a 100%);
+  padding: 14px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
-  gap: 12px;
+  gap: 10px;
   flex-shrink: 0;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .message-input {
   flex: 1;
-  background-color: #242424;
-  color: rgba(255, 255, 255, 0.87);
-  border: 1px solid #444;
-  border-radius: 8px;
-  padding: 12px 16px;
-  font-size: 0.95em;
+  background-color: #2a2a2a;
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 11px 18px;
+  font-size: 15px;
   font-family: inherit;
-  transition: border-color 0.25s;
+  transition: all 0.2s;
+  line-height: 1.4;
 }
 
 .message-input:focus {
   outline: none;
-  border-color: #646cff;
+  border-color: rgba(100, 108, 255, 0.6);
+  background-color: #2d2d2d;
+  box-shadow: 0 0 0 3px rgba(100, 108, 255, 0.1);
 }
 
 .message-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.35);
 }
 
 .message-input:disabled {
@@ -338,23 +339,31 @@ const leaveRoom = async () => {
 }
 
 .send-button {
-  background-color: #646cff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
+  padding: 11px 22px;
+  border-radius: 20px;
   cursor: pointer;
   font-weight: 600;
-  transition: all 0.25s;
+  font-size: 15px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(100, 108, 255, 0.3);
 }
 
 .send-button:hover:not(:disabled) {
-  background-color: #535bf2;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.4);
+}
+
+.send-button:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .send-button:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
-  background-color: #646cff;
+  transform: none;
+  box-shadow: none;
 }
 </style>

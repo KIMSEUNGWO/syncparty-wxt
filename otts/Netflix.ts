@@ -12,15 +12,29 @@ export const netflix : OTTPlugin = {
 
         const style = document.createElement('style');
         style.innerText = '.watch-video--player-view { position: relative;}';
-        watchVideo.appendChild(style);
+        container.appendChild(style);
         watchVideo.appendChild(container);
 
         // MutationObserver로 자식 변화를 감지하여 container가 항상 마지막에 위치하도록 보장
+        let restoreTimeout: number | null = null;
+
         const observer = new MutationObserver(() => {
-            // container가 마지막 자식이 아니면 다시 마지막으로 이동
-            if (watchVideo.lastElementChild !== container) {
-                watchVideo.appendChild(container);
+            // debounce: 너무 자주 실행되지 않도록
+            if (restoreTimeout) {
+                clearTimeout(restoreTimeout);
             }
+
+            restoreTimeout = window.setTimeout(() => {
+                // container가 DOM에서 완전히 제거되었거나, 마지막 자식이 아닌 경우에만 복원
+                if (!watchVideo.contains(container)) {
+                    console.log('[Netflix] Container removed, restoring');
+                    watchVideo.appendChild(container);
+                } else if (watchVideo.lastElementChild !== container) {
+                    // 이미 DOM에 있지만 위치가 바뀐 경우
+                    // appendChild는 자동으로 이동시키므로 호출하지 않음
+                    console.log('[Netflix] Container position changed, but not moving to avoid flicker');
+                }
+            }, 50);
         });
 
         observer.observe(watchVideo, {
@@ -37,5 +51,11 @@ export const netflix : OTTPlugin = {
         requestAnimationFrame(() => {
             window.dispatchEvent(new Event('resize'));
         });
+
+        // cleanup 함수 반환: Observer 해제
+        return () => {
+            console.log('[Netflix] Observer disconnected');
+            observer.disconnect();
+        };
     }
 }

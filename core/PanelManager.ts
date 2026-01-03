@@ -17,6 +17,7 @@ export class PanelManager {
     private currentPlugin: OTTPlugin | null = null;
     private panelObserver: MutationObserver | null = null;
     private shouldMaintainPanel: boolean = false;
+    private cleanupFn: (() => void) | null = null;
 
     private constructor() {
     }
@@ -36,24 +37,45 @@ export class PanelManager {
 
         this.shouldMaintainPanel = true;
 
+        let debounceTimer: number | null = null;
+
         // MutationObserver로 패널이 제거되는지 감시
-        this.panelObserver = new MutationObserver(() => {
-            if (this.shouldMaintainPanel && !this.isOpen() && this.currentPlugin) {
-                console.warn('[PanelManager] Panel was removed, restoring...');
-
-                // 현재 URL에 따라 적절한 모드로 복구
-                const isWatchPage = this.currentPlugin.isWatchPage(window.location.href);
-                this.currentMode = isWatchPage ? PanelMode.EMBEDDED : PanelMode.FLOATING;
-
-                console.log('[PanelManager] Restoring in', this.currentMode, 'mode');
-                this.createPanel(this.currentPlugin);
+        this.panelObserver = new MutationObserver((mutations) => {
+            // debounce: 너무 자주 실행되지 않도록
+            if (debounceTimer) {
+                clearTimeout(debounceTimer);
             }
+
+            debounceTimer = window.setTimeout(() => {
+                if (this.shouldMaintainPanel && !this.isOpen() && this.currentPlugin) {
+                    console.warn('[PanelManager] Panel was removed, restoring...');
+
+                    // 현재 URL에 따라 적절한 모드로 복구
+                    const isWatchPage = this.currentPlugin.isWatchPage(window.location.href);
+                    this.currentMode = isWatchPage ? PanelMode.EMBEDDED : PanelMode.FLOATING;
+
+                    console.log('[PanelManager] Restoring in', this.currentMode, 'mode');
+                    this.createPanel(this.currentPlugin);
+                }
+            }, 100); // 100ms 디바운스
         });
 
+        // body의 직접 자식만 감시 (subtree: false)
         this.panelObserver.observe(document.body, {
             childList: true,
-            subtree: true
+            subtree: false  // body의 직접 자식만 감지
         });
+
+        // Embedded 모드일 경우 watch-video도 감시
+        if (this.currentMode === PanelMode.EMBEDDED) {
+            const watchVideo = document.querySelector('.watch-video');
+            if (watchVideo) {
+                this.panelObserver.observe(watchVideo, {
+                    childList: true,
+                    subtree: false
+                });
+            }
+        }
     }
 
     private stopPanelProtection() {
@@ -82,11 +104,35 @@ export class PanelManager {
     }
 
     public async removeModal() {
-        // 패널 보호 중지
-        this.stopPanelProtection();
+        console.log('[PanelManager] removeModal called');
 
-        document.getElementById(this.PANEL_CONTAINER)?.remove();
+        // 먼저 플래그 비활성화 (Observer 콜백이 실행되더라도 복구 안 되도록)
+        this.shouldMaintainPanel = false;
+
+        // Observer 즉시 해제
+        if (this.panelObserver) {
+            this.panelObserver.disconnect();
+            this.panelObserver = null;
+            console.log('[PanelManager] Panel observer disconnected');
+        }
+
+        // Netflix Observer cleanup 함수 호출
+        if (this.cleanupFn) {
+            this.cleanupFn();
+            this.cleanupFn = null;
+            console.log('[PanelManager] Cleanup function executed');
+        }
+
+        // currentPlugin도 먼저 null로 설정
         this.currentPlugin = null;
+
+        // 그 다음 DOM 제거
+        const container = document.getElementById(this.PANEL_CONTAINER);
+        if (container) {
+            container.remove();
+            console.log('[PanelManager] Panel container removed');
+        }
+        window.dispatchEvent(new Event('resize'));
     }
 
     public async switchToEmbeddedMode() {
@@ -159,10 +205,19 @@ export class PanelManager {
     }
 
     private createPanel(ottPlugin: OTTPlugin) {
+        // 이미 패널이 있고 wrapper도 있으면 재생성하지 않음
+        const existingPanel = document.getElementById(this.PANEL_CONTAINER);
+        if (existingPanel && existingPanel.querySelector('.syncparty-panel-wrapper')) {
+            console.log('[PanelManager] Panel already exists, skipping creation');
+            return;
+        }
+
+        console.log('[PanelManager] Creating new panel');
+
         const container = document.createElement("div");
         container.classList.add('syncparty-panel-wrapper');
 
-        const panelContainer = document.getElementById(this.PANEL_CONTAINER) || this.createPanelContainer(ottPlugin);
+        const panelContainer = existingPanel || this.createPanelContainer(ottPlugin);
         panelContainer.appendChild(container);
 
         createApp(App)
@@ -260,7 +315,11 @@ export class PanelManager {
             });
 
             // Embedded 모드에서만 ottPlugin.locationContainer 호출
-            ottPlugin.locationContainer(container);
+            const cleanup = ottPlugin.locationContainer(container);
+            if (cleanup) {
+                this.cleanupFn = cleanup;
+                console.log('[PanelManager] Cleanup function registered');
+            }
         }
 
         return container;

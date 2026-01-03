@@ -1,16 +1,16 @@
 /**
  * Profile image utilities
- * Manages random selection and URL generation for profile images (P1.svg - P9.svg)
+ * Manages random selection and URL generation for profile images (P1.png - P9.png)
  */
 
 const PROFILE_IMAGES = [
-  'P1.svg', 'P2.svg', 'P3.svg', 'P4.svg', 'P5.svg',
-  'P6.svg', 'P7.svg', 'P8.svg', 'P9.svg'
+  'P1.png', 'P2.png', 'P3.png', 'P4.png', 'P5.png',
+  'P6.png', 'P7.png', 'P8.png', 'P9.png'
 ]
 
 /**
  * Get a random profile image filename from the available pool
- * @returns Filename like "P3.svg"
+ * @returns Filename like "P3.png"
  */
 export function getRandomProfileImage(): string {
   const randomIndex = Math.floor(Math.random() * PROFILE_IMAGES.length)
@@ -19,8 +19,8 @@ export function getRandomProfileImage(): string {
 
 /**
  * Get the full URL path for a profile image
- * @param filename - Profile image filename (e.g., "P3.svg")
- * @returns Full path like "/profile/P3.svg"
+ * @param filename - Profile image filename (e.g., "P3.png")
+ * @returns Full path like "/profile/P3.png"
  */
 export function getProfileImageUrl(filename: string): string {
   return `/profile/${filename}`

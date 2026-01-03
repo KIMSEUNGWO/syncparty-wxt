@@ -2,7 +2,7 @@
 
 export interface OTTPlugin {
     name: string,
-    locationContainer: (container : HTMLElement) => void;
+    locationContainer: (container : HTMLElement) => (() => void) | void;
     isWatchPage: (url: string) => boolean;
 }
 

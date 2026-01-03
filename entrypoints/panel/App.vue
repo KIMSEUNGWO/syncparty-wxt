@@ -1,5 +1,5 @@
 <template>
-  <div class="sidepanel-container">
+  <div class="sidepanel-container" @keydown.stop @keyup.stop @keypress.stop>
     <!-- Error State -->
     <div v-if="showErrorState" class="error-state">
       <h3>오류 발생</h3>

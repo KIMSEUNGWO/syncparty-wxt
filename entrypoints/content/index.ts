@@ -1,5 +1,7 @@
 import {MessageType} from "@/core/MessageType";
 import {panelManager} from "@/core/PanelManager";
+import {urlHelper} from "@/core/UrlHelper";
+import {OTTPlugin, OTTType} from "@/types";
 
 export default defineContentScript({
   matches: [
@@ -15,8 +17,8 @@ export default defineContentScript({
 
     if (inviteCode) {
       console.log('Join room detected:', inviteCode)
-
-      await panelManager.openPanel();
+      const ottPlugin: OTTPlugin = urlHelper.toPlugin(window.location.href);
+      await panelManager.openPanel(ottPlugin);
       const url = new URL(window.location.href)
       url.searchParams.delete('inviteCode')
       window.history.replaceState({}, '', url.toString())
@@ -27,7 +29,8 @@ export default defineContentScript({
       switch (message.type) {
         case MessageType.OPEN_PANEL:
           console.log('컨텐츠스크립트에서 OPEN_PANEL 메세지 받음')
-          await panelManager.openPanel();
+          const ottPlugin: OTTPlugin = urlHelper.toPlugin(window.location.href);
+          await panelManager.openPanel(ottPlugin);
           break;
       }
     })

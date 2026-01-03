@@ -1,6 +1,7 @@
 import {createApp} from "vue";
 import App from "@/entrypoints/panel/App.vue";
 import {withTimeout} from "async-mutex";
+import {OTTPlugin, OTTType} from "@/types";
 
 
 export class PanelManager {
@@ -23,29 +24,29 @@ export class PanelManager {
         return !!document.getElementById(this.PANEL_CONTAINER);
     }
 
-    public async openPanel() {
+    public async openPanel(ottPlugin: OTTPlugin) {
         if (this.isOpen()) {
             return;
         }
-        this.createPanel();
+        this.createPanel(ottPlugin);
     }
 
     public async removeModal() {
         document.getElementById(this.PANEL_CONTAINER)?.remove();
     }
 
-    private createPanel() {
+    private createPanel(ottPlugin: OTTPlugin) {
         const container = document.createElement("div");
         container.classList.add('syncparty-panel-wrapper');
 
-        const modalContainer = document.getElementById(this.PANEL_CONTAINER) || this.createPanelContainer();
-        modalContainer.appendChild(container);
+        const panelContainer = document.getElementById(this.PANEL_CONTAINER) || this.createPanelContainer(ottPlugin);
+        panelContainer.appendChild(container);
 
         createApp(App)
             .mount(container);
     }
 
-    private createPanelContainer(): HTMLElement {
+    private createPanelContainer(ottPlugin: OTTPlugin): HTMLElement {
         const container = document.createElement("div");
         container.id = this.PANEL_CONTAINER;
         container.style.width = '400px'; // 픽셀로 고정
@@ -118,28 +119,7 @@ export class PanelManager {
             }
         });
 
-        const watchVideo = document.querySelector('.watch-video') as HTMLElement;
-        watchVideo.style.display = 'flex';
-
-        const style = document.createElement('style');
-        style.innerText = '.watch-video--player-view { position: relative;}';
-
-        const watchPlayerView = document.querySelector('.watch-video--player-view') as HTMLElement;
-
-        // watchPlayerView.style.position = 'relative';
-
-        watchVideo.appendChild(style);
-        watchVideo.appendChild(container);
-
-        // 비디오가 리사이즈를 감지하도록 강제로 resize 이벤트 발생
-        setTimeout(() => {
-            window.dispatchEvent(new Event('resize'));
-        }, 100);
-
-        // 추가로 requestAnimationFrame으로도 한번 더 시도
-        requestAnimationFrame(() => {
-            window.dispatchEvent(new Event('resize'));
-        });
+        ottPlugin.locationContainer(container);
 
         return container;
     }

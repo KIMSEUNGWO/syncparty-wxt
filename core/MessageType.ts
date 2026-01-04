@@ -1,5 +1,9 @@
 
 export enum MessageType {
     OPEN_PANEL,
-    JOIN_ROOM
+    JOIN_ROOM,
+    CHAT_INIT,
+    CHAT_SEND_MESSAGE,
+    CHAT_LEAVE,
+    CHAT_MESSAGE_RECEIVED
 }

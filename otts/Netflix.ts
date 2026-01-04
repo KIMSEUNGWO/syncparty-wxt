@@ -15,31 +15,50 @@ export const netflix : OTTPlugin = {
         container.appendChild(style);
         watchVideo.appendChild(container);
 
-        // MutationObserver로 자식 변화를 감지하여 container가 항상 마지막에 위치하도록 보장
-        let restoreTimeout: number | null = null;
+        // observer를 외부 스코프에서 추적
+        let playerViewObserver: MutationObserver | null = null;
 
-        const observer = new MutationObserver(() => {
-            // debounce: 너무 자주 실행되지 않도록
-            if (restoreTimeout) {
-                clearTimeout(restoreTimeout);
-            }
-
-            restoreTimeout = window.setTimeout(() => {
-                // container가 DOM에서 완전히 제거되었거나, 마지막 자식이 아닌 경우에만 복원
-                if (!watchVideo.contains(container)) {
-                    console.log('[Netflix] Container removed, restoring');
-                    watchVideo.appendChild(container);
-                } else if (watchVideo.lastElementChild !== container) {
-                    // 이미 DOM에 있지만 위치가 바뀐 경우
-                    // appendChild는 자동으로 이동시키므로 호출하지 않음
-                    console.log('[Netflix] Container position changed, but not moving to avoid flicker');
+        const watchHasPlayerView = async () => {
+            return new Promise<void>((resolve, reject) => {
+                const view = document.querySelector('.watch-video--player-view');
+                if (view) {
+                    console.log('이미 있음! 바로 추가할 수 있음');
+                    resolve();
+                    return;
                 }
-            }, 50);
-        });
 
-        observer.observe(watchVideo, {
-            childList: true,  // 자식 노드의 추가/제거 감지
-            subtree: false    // 직계 자식만 감지
+                // MutationObserver로 DOM 변화를 비동기적으로 감지
+                playerViewObserver = new MutationObserver(() => {
+                    const view = document.querySelector('.watch-video--player-view');
+                    if (view) {
+                        console.log('이제 찾았음');
+                        playerViewObserver?.disconnect();
+                        playerViewObserver = null;
+                        resolve();
+                    }
+                });
+
+                playerViewObserver.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
+
+                // 타임아웃 설정: 10초 후에도 못 찾으면 reject
+                setTimeout(() => {
+                    if (playerViewObserver) {
+                        playerViewObserver.disconnect();
+                        playerViewObserver = null;
+                        reject(new Error('Timeout: .watch-video--player-view not found'));
+                    }
+                }, 10000);
+            });
+        }
+
+        watchHasPlayerView().then(() => {
+            console.log('추가한다~');
+            watchVideo.appendChild(container);
+        }).catch((error) => {
+            console.error('[Netflix] Failed to find player view:', error);
         });
 
         // 비디오가 리사이즈를 감지하도록 강제로 resize 이벤트 발생
@@ -47,15 +66,13 @@ export const netflix : OTTPlugin = {
             window.dispatchEvent(new Event('resize'));
         }, 100);
 
-        // 추가로 requestAnimationFrame으로도 한번 더 시도
-        requestAnimationFrame(() => {
-            window.dispatchEvent(new Event('resize'));
-        });
-
         // cleanup 함수 반환: Observer 해제
         return () => {
-            console.log('[Netflix] Observer disconnected');
-            observer.disconnect();
+            console.log('[Netflix] Cleanup: Observer disconnected');
+            if (playerViewObserver) {
+                playerViewObserver.disconnect();
+                playerViewObserver = null;
+            }
         };
     }
 }

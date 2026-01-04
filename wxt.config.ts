@@ -12,6 +12,14 @@ export default defineConfig({
     ],
   },
   modules: ['@wxt-dev/module-vue'],
+  hooks: {
+    'build:manifestGenerated': async (wxt, manifest) => {
+      // Add open_in_tab to options_ui
+      if (manifest.options_ui) {
+        manifest.options_ui.open_in_tab = true;
+      }
+    },
+  },
   vite: () => ({
     resolve: {
       alias: {

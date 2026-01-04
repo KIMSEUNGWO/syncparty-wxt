@@ -39,7 +39,8 @@ const profileImageUrl = computed(() => {
   const imageName = props.message.profileImage || 'P1.png'
 
   // browser.runtime.getURL()로 확장 프로그램 리소스 경로 생성
-  return browser.runtime.getURL(`/profile/${imageName}`)
+  // return browser.runtime.getURL(`/profile/${imageName}`)
+  return 'http://localhost:8080/profile/P1.png';
 })
 
 const formatTime = (timestamp: number): string => {

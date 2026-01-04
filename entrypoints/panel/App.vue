@@ -61,10 +61,10 @@
 import ChatMessage from '@/components/ChatMessage.vue'
 import CopyButton from '@/components/CopyButton.vue'
 import type { ChatMessage as ChatMessageType } from '@/components/dto/ChatMessage'
-import { generateUUID } from '@/components/utils/uuid'
 import { getRandomProfileImage } from '@/components/utils/profileImages'
 import { storageManager } from '@/core/StorageManager'
 import { panelManager } from '@/core/PanelManager'
+import { MessageType } from '@/core/MessageType'
 
 const inviteCode = ref<string>('')
 const inviteUrl = ref<string>('')
@@ -90,7 +90,6 @@ onMounted(async () => {
     }
 
     inviteCode.value = sessionData.inviteCode
-    // inviteUrl.value = `https://syncparty.com/join?code=${sessionData.inviteCode}`
     inviteUrl.value = `http://localhost:8080/join?inviteCode=${sessionData.inviteCode}`
     currentUserId.value = sessionData.userId
 
@@ -102,18 +101,42 @@ onMounted(async () => {
     }
     profileImage.value = profile
 
-    // Load existing messages
-    if (sessionData.chatMessages) {
-      try {
-        messages.value = JSON.parse(sessionData.chatMessages)
-        // Auto-scroll to bottom after loading messages
-        await nextTick()
-        scrollToBottom()
-      } catch (err) {
-        console.error('Failed to parse saved messages:', err)
-        messages.value = []
+    // Background script에 채팅 초기화 요청
+    try {
+      const response = await browser.runtime.sendMessage({
+        type: MessageType.CHAT_INIT,
+        roomCode: sessionData.inviteCode,
+        userId: sessionData.userId,
+        username: '나'
+      })
+
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to initialize chat')
       }
+
+      console.log('[Panel] Chat initialized via background script')
+    } catch (err) {
+      console.error('[Panel] Failed to initialize chat:', err)
+      showErrorState.value = true
+      errorMessage.value = '채팅 서버에 연결할 수 없습니다.'
     }
+
+    // Background에서 오는 메시지 수신 리스너
+    browser.runtime.onMessage.addListener((message) => {
+      if (message.type === MessageType.CHAT_MESSAGE_RECEIVED) {
+        const receivedMessage = message.message as ChatMessageType
+
+        // 프로필 이미지 설정 (본인 메시지인 경우)
+        if (receivedMessage.userId === currentUserId.value) {
+          receivedMessage.profileImage = profileImage.value
+        }
+
+        messages.value.push(receivedMessage)
+
+        // Auto-scroll to bottom
+        nextTick(() => scrollToBottom())
+      }
+    })
   } catch (err) {
     console.error('Error loading session data:', err)
     showErrorState.value = true
@@ -121,31 +144,36 @@ onMounted(async () => {
   }
 })
 
+onUnmounted(async () => {
+  // Background script에 채팅 종료 알림
+  try {
+    await browser.runtime.sendMessage({
+      type: MessageType.CHAT_LEAVE
+    })
+  } catch (err) {
+    console.error('[Panel] Failed to notify background about leaving:', err)
+  }
+})
+
 const sendMessage = async () => {
   if (!currentMessage.value.trim()) return
 
-  const newMessage: ChatMessageType = {
-    id: generateUUID(),
-    userId: currentUserId.value,
-    userName: '나',
-    profileImage: profileImage.value,
-    message: currentMessage.value,
-    timestamp: Date.now()
-  }
-
-  messages.value.push(newMessage)
-  currentMessage.value = ''
-
-  // Save to storage
   try {
-    await storageManager.setItem('session:chatMessages', JSON.stringify(messages.value))
-  } catch (err) {
-    console.error('Failed to save messages:', err)
-  }
+    // Background script를 통해 메시지 전송
+    const response = await browser.runtime.sendMessage({
+      type: MessageType.CHAT_SEND_MESSAGE,
+      text: currentMessage.value
+    })
 
-  // Auto-scroll to bottom
-  await nextTick()
-  scrollToBottom()
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to send message')
+    }
+
+    currentMessage.value = ''
+  } catch (err) {
+    console.error('[Panel] Failed to send message:', err)
+    errorMessage.value = '메시지 전송에 실패했습니다.'
+  }
 }
 
 const scrollToBottom = () => {
@@ -156,12 +184,17 @@ const scrollToBottom = () => {
 
 const leaveRoom = async () => {
   try {
-    // 패널만 닫기 (세션 데이터는 유지)
+    // Background script에 채팅 종료 알림
+    await browser.runtime.sendMessage({
+      type: MessageType.CHAT_LEAVE
+    })
+
+    // 패널 닫기
     await panelManager.removeModal()
 
-    console.log('패널을 닫았습니다')
+    console.log('[Panel] 패널을 닫고 채팅방을 나갔습니다')
   } catch (err) {
-    console.error('패널 닫기 실패:', err)
+    console.error('[Panel] 패널 닫기 실패:', err)
     errorMessage.value = '패널 닫기에 실패했습니다.'
     showErrorState.value = true
   }

@@ -1,0 +1,2 @@
+/* Pretendard 웹폰트 - CDN 사용으로 번들 크기 대폭 감소 (6MB -> ~0KB) */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css');

@@ -1,0 +1,9 @@
+body {
+  margin: 0;
+}
+#prismify {
+  background: var(--bg-dark);
+  font-family: 'Pretendard', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

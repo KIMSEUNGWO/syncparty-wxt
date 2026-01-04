@@ -1,0 +1,135 @@
+
+
+/* CSS Variables - 높은 특이성 유지 */
+:root {
+    --font-color-1: #F8FAFC;
+    --font-color-2: #94A3B8;
+    --font-disabled: #3E4750;
+
+    --border-color: #2D2D44;
+
+    --bg-dark: #0F0F23;
+    --bg-darker: #0A0A0F;
+
+    --card-bg-color: #1A1A2E;
+    --card-bg-hover: #252542;
+
+    --purple: #8B5CF6;
+    --pink: #EC4899;
+    --orange: #FB923C;
+    --orange-opacity: rgba(251, 146, 60, 0.4);
+    --cyan: #06B6D4;
+    --green: #22C55E;
+    --yellow: #FDE047;
+    --red: #EC484B;
+
+    --gradient-point: linear-gradient(135deg, #8B5CF6, #EC4899);
+    --plugin-css-spy: linear-gradient(135deg, #8B5CF6, #EC4899);
+    --plugin-color-picker: linear-gradient(135deg, #06B6D4, #22C55E);
+    --plugin-ruler: linear-gradient(135deg, #FB923C, #FDE047);
+    --plugin-grid-overlay: linear-gradient(135deg, #A855F7, #0EA5E9);
+    --plugin-hls-downloader: linear-gradient(135deg, #3B82F6, #8B5CF6);
+}
+
+/* Reset styles - :where()로 특이성 0 (scoped CSS가 우선) */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+button {
+    border: none;
+    cursor: pointer;
+    background-color: transparent;
+}
+
+svg {
+    pointer-events: none;
+}
+
+li {
+    list-style: none;
+}
+
+a {
+    text-decoration: none;
+}
+
+.plugin-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.plugin-icon svg {
+    width: 60%;
+    height: 60%;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--font-color-1);
+    line-height: 1.4;
+}
+
+p,
+span {
+    color: var(--font-color-2);
+    line-height: 1.4;
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.15);
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.35);
+    width: 8px;
+}
+
+/* Firefox scrollbar */
+{
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.15) transparent;
+}
+
+/* Modal highlight animation */
+@keyframes modal-highlight {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+    }
+    25% {
+        transform: scale(1.03);
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
+    50% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(139, 92, 246, 0.2);
+    }
+    75% {
+        transform: scale(1.01);
+        box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.05);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+    }
+}

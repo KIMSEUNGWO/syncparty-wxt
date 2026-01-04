@@ -1,6 +1,5 @@
 import {createApp} from "vue";
 import App from "@/entrypoints/panel/App.vue";
-import {withTimeout} from "async-mutex";
 import {OTTPlugin, OTTType} from "@/types";
 
 enum PanelMode {

@@ -3,6 +3,12 @@ import { generateUUID } from '@/components/utils/uuid'
 import { getRandomProfileImage } from '@/components/utils/profileImages'
 import { MessageType } from "@/core/MessageType"
 import { storageManager } from '@/core/StorageManager'
+import { ChatService } from '@/services/ChatService'
+import type { ChatMessage } from '@/components/dto/ChatMessage'
+
+// ChatService 인스턴스 (background에서 관리)
+let chatService: ChatService | null = null
+let activePanelTabId: number | null = null
 
 export default defineBackground(() => {
   console.log('Hello background!', { id: browser.runtime.id })
@@ -40,6 +46,39 @@ export default defineBackground(() => {
           })
           .catch((error) => {
             console.error('Failed to open side panel:', error)
+            sendResponse({ success: false, error: error.message })
+          })
+        break;
+
+      case MessageType.CHAT_INIT:
+        handleChatInit(message.roomCode, message.userId, message.username, sender.tab?.id)
+          .then(() => {
+            sendResponse({ success: true })
+          })
+          .catch((error) => {
+            console.error('Failed to initialize chat:', error)
+            sendResponse({ success: false, error: error.message })
+          })
+        break;
+
+      case MessageType.CHAT_SEND_MESSAGE:
+        handleChatSendMessage(message.text)
+          .then(() => {
+            sendResponse({ success: true })
+          })
+          .catch((error) => {
+            console.error('Failed to send message:', error)
+            sendResponse({ success: false, error: error.message })
+          })
+        break;
+
+      case MessageType.CHAT_LEAVE:
+        handleChatLeave()
+          .then(() => {
+            sendResponse({ success: true })
+          })
+          .catch((error) => {
+            console.error('Failed to leave chat:', error)
             sendResponse({ success: false, error: error.message })
           })
         break;
@@ -107,6 +146,59 @@ async function handleJoinRoom(inviteCode: string) {
   } catch (error) {
     console.error('Error joining room:', error)
     throw error
+  }
+}
+
+async function handleChatInit(roomCode: string, userId: string, username: string, tabId: number | undefined) {
+  console.log('[Background] Initializing chat:', { roomCode, userId, username, tabId })
+
+  if (!tabId) {
+    throw new Error('Tab ID is required')
+  }
+
+  activePanelTabId = tabId
+
+  // 기존 ChatService가 있으면 정리
+  if (chatService) {
+    await chatService.leave()
+    chatService = null
+  }
+
+  // 새로운 ChatService 생성 및 초기화
+  chatService = new ChatService()
+  await chatService.initialize(roomCode, userId, username)
+
+  // 메시지 핸들러 등록
+  chatService.onMessage((message: ChatMessage) => {
+    // Panel에 메시지 전달
+    if (activePanelTabId) {
+      browser.tabs.sendMessage(activePanelTabId, {
+        type: MessageType.CHAT_MESSAGE_RECEIVED,
+        message: message
+      }).catch((error) => {
+        console.error('[Background] Failed to send message to panel:', error)
+      })
+    }
+  })
+
+  console.log('[Background] Chat initialized successfully')
+}
+
+async function handleChatSendMessage(text: string) {
+  if (!chatService) {
+    throw new Error('Chat service is not initialized')
+  }
+
+  chatService.sendMessage(text)
+  console.log('[Background] Message sent:', text)
+}
+
+async function handleChatLeave() {
+  if (chatService) {
+    await chatService.leave()
+    chatService = null
+    activePanelTabId = null
+    console.log('[Background] Chat service cleaned up')
   }
 }
 
